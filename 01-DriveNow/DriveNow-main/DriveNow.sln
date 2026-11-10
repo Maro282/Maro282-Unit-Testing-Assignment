@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.10.12224.181 stable
+VisualStudioVersion = 18.10.12224.181
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72D-47B6-A68D-7590B98EB39B}"
 EndProject
@@ -17,7 +17,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DriveNow.LegacyTests", "tests\DriveNow.LegacyTests\DriveNow.LegacyTests.csproj", "{D86F575D-EA25-4383-A8D9-52C0EBE8BEEF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DriveNow.UnitTests", "DriveNow.UnitTests\DriveNow.UnitTests.csproj", "{1A1638EE-AFC1-43A7-9B0A-EC34AF069DF6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DriveNow.ArchitectureTests", "tests\DriveNow.ArchitectureTests\DriveNow.ArchitectureTests.csproj", "{952C4E9E-A490-4D8A-8AF6-9B8D4F720649}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DriveNow.UnitTests", "tests\DriveNow.UnitTests\DriveNow.UnitTests.csproj", "{10FBAC35-FDC0-4A92-BEDF-30BCA8903C10}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -56,12 +58,18 @@ Global
 		{D86F575D-EA25-4383-A8D9-52C0EBE8BEEF}.Release|x64.Build.0 = Release|Any CPU
 		{D86F575D-EA25-4383-A8D9-52C0EBE8BEEF}.Release|x86.ActiveCfg = Release|Any CPU
 		{D86F575D-EA25-4383-A8D9-52C0EBE8BEEF}.Release|x86.Build.0 = Release|Any CPU
-		{1A1638EE-AFC1-43A7-9B0A-EC34AF069DF6}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{1A1638EE-AFC1-43A7-9B0A-EC34AF069DF6}.Release|Any CPU.Build.0 = Release|Any CPU
-		{1A1638EE-AFC1-43A7-9B0A-EC34AF069DF6}.Release|x64.ActiveCfg = Release|Any CPU
-		{1A1638EE-AFC1-43A7-9B0A-EC34AF069DF6}.Release|x64.Build.0 = Release|Any CPU
-		{1A1638EE-AFC1-43A7-9B0A-EC34AF069DF6}.Release|x86.ActiveCfg = Release|Any CPU
-		{1A1638EE-AFC1-43A7-9B0A-EC34AF069DF6}.Release|x86.Build.0 = Release|Any CPU
+		{952C4E9E-A490-4D8A-8AF6-9B8D4F720649}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{952C4E9E-A490-4D8A-8AF6-9B8D4F720649}.Release|Any CPU.Build.0 = Release|Any CPU
+		{952C4E9E-A490-4D8A-8AF6-9B8D4F720649}.Release|x64.ActiveCfg = Release|Any CPU
+		{952C4E9E-A490-4D8A-8AF6-9B8D4F720649}.Release|x64.Build.0 = Release|Any CPU
+		{952C4E9E-A490-4D8A-8AF6-9B8D4F720649}.Release|x86.ActiveCfg = Release|Any CPU
+		{952C4E9E-A490-4D8A-8AF6-9B8D4F720649}.Release|x86.Build.0 = Release|Any CPU
+		{10FBAC35-FDC0-4A92-BEDF-30BCA8903C10}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{10FBAC35-FDC0-4A92-BEDF-30BCA8903C10}.Release|Any CPU.Build.0 = Release|Any CPU
+		{10FBAC35-FDC0-4A92-BEDF-30BCA8903C10}.Release|x64.ActiveCfg = Release|Any CPU
+		{10FBAC35-FDC0-4A92-BEDF-30BCA8903C10}.Release|x64.Build.0 = Release|Any CPU
+		{10FBAC35-FDC0-4A92-BEDF-30BCA8903C10}.Release|x86.ActiveCfg = Release|Any CPU
+		{10FBAC35-FDC0-4A92-BEDF-30BCA8903C10}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -72,6 +80,8 @@ Global
 		{C436EE1C-F448-453A-BE77-C93CFC441544} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{B837193E-248F-492A-8337-142DFE864DBE} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{D86F575D-EA25-4383-A8D9-52C0EBE8BEEF} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{952C4E9E-A490-4D8A-8AF6-9B8D4F720649} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{10FBAC35-FDC0-4A92-BEDF-30BCA8903C10} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {FE08FB93-7FAD-4D7D-9065-540646B75441}
