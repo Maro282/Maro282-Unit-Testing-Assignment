@@ -54,7 +54,7 @@ namespace DriveNow.UnitTests.Domain
         // Testing 29 february in a leap year
         [InlineData(2000, 2, 29, 2024, 2, 29, 24)]
         [InlineData(2000, 2, 29, 2024, 2, 28, 23)]
-        public void voidCalculateLicenseYears_LicenseIssueDate_ReturnsFullYears(
+        public void CalculateLicenseYears_LicenseIssueDate_ReturnsFullYears(
             int issueYear,
             int issuehMonth,
             int issueDay,
@@ -77,13 +77,14 @@ namespace DriveNow.UnitTests.Domain
 
 
         [Theory]
-        [InlineData("2026-11-28 10:00", "2026-11-28 10:00", 1)]
         [InlineData("2026-11-28 10:00", "2026-11-29 10:30", 1)]
         [InlineData("2026-11-28 10:00", "2026-11-29 10:59", 1)]
-        [InlineData("2026-11-28 10:00", "2026-11-29 11:00", 1)]
+
+        [InlineData("2026-11-28 10:00", "2026-11-29 11:00", 1)] // will fail because of the logic  >= 60 
         [InlineData("2026-11-28 10:00", "2026-11-29 11:01", 2)]
+
         [InlineData("2026-11-28 10:00", "2026-11-30 10:00", 2)]
-        [InlineData("2026-11-28 10:00", "2026-11-31 11:01", 4)]
+        [InlineData("2026-11-28 10:00", "2026-11-30 11:01", 3)]
 
         public void CalculateRentalDays_PickupAndReturnDates_ReturnsTotalDays(
             DateTime pickupDate,
@@ -100,14 +101,15 @@ namespace DriveNow.UnitTests.Domain
 
 
 
-        [Fact]
-        public void CalculateRentalDays_ReturnLessThanPickup_ThrowsException()
-        {
-            // Arrange
-            var pickupDate = new DateTime(2026, 6, 17);
-            var returnDate = new DateTime(2026, 6, 14);
+        [Theory]
+        [InlineData("2026-11-28 10:00", "2026-11-28 10:00")]
+        [InlineData("2026-11-28 10:00", "2026-11-27 10:00")]
 
-            // Act
+        public void CalculateRentalDays_ReturnLessThanOrEqualPickup_ThrowsException(DateTime pickupDate,
+            DateTime returnDate)
+        {
+
+            //Arrange -  Act
             var result = () => RentalMath.CalculateRentalDays(pickupDate, returnDate);
 
             // Assert
