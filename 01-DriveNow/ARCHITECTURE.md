@@ -45,3 +45,19 @@ The following architecture rules passed successfully:
 - **R1:** DriveNow.Domain has no dependencies on other DriveNow projects.
 - **R3:** DriveNow.Infrastructure does not depend on DriveNow.ConsoleApp.
 - **R5:** Unit test classes and test methods follow the required naming conventions.
+
+=================================================================================================
+
+## Task 4 — Interface Placement Decisions
+
+I have created abstraction folder in DriveNow.Application project
+
+for each Repository i have created an equavilent interface (ICustomerRepository, IVehicleRepository, IBookingRepository, and IPromoCodeRepository) belong to Application because application services consume these contracts.
+
+For external service interfaces (IPaymentGateway, ISmsSender, IEmailSender, and IAuditLogger) also belong to Application because they represent capabilities required by application use cases.
+
+DriveNow.Infrastructure implements these interfaces and references Application and Domain.
+
+DriveNow.Application references Domain only and does not depend on Infrastructure.
+
+This dependency direction keeps application logic independent of infrastructure implementations and supports dependency substitution in unit tests.

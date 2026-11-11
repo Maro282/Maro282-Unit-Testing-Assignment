@@ -1,5 +1,4 @@
-﻿using System.Globalization;
-using DriveNow.Application.Bookings;
+﻿using DriveNow.Application.Abstractions;
 using DriveNow.Application.Models;
 using DriveNow.Application.Receipts;
 using DriveNow.Application.Services;
@@ -8,19 +7,90 @@ using DriveNow.Domain.Exceptions;
 using DriveNow.Domain.Services;
 using DriveNow.Domain.ValueObjects;
 using DriveNow.Infrastructure.External;
+using DriveNow.Infrastructure.Logging;
+using DriveNow.Infrastructure.Persistence;
 using DriveNow.Infrastructure.Repositories;
+using System.Globalization;
 
 namespace DriveNow.ConsoleApp;
 
 internal static class Program
 {
-    static readonly CustomerRepo Customers = new();
-    static readonly VehicleRepository Vehicles = new();
-    static readonly BookingRepository Bookings = new();
-    static readonly PricingService Pricing = new();
-    static readonly BookingService BookingService = new();
-    static readonly ReturnService ReturnService = new();
-    static readonly CancellationService CancellationService = new();
+
+    //For InMemoryDatabase Needs TimeProfider
+    static readonly TimeProvider Clock = TimeProvider.System;
+    static readonly InMemoryDatabase Database = new(Clock);
+
+    // Repositories
+    static readonly CustomerRepository Customers = new(Database);
+    static readonly VehicleRepository Vehicles = new(Database);
+    static readonly BookingRepository Bookings = new(Database);
+    static readonly PromoCodeRepository Promos = new(Database);
+
+
+
+    static readonly IDelay Delay = new ThreadDelay();
+    static readonly Random Random = new();
+
+
+    // external Services
+    static readonly ISmsSender Sms = new SmsSender(Delay);
+    static readonly IEmailSender Email = new EmailSender(Clock);
+    static readonly IAuditLogger Audit = new AuditLogger(Clock);
+    static readonly IRandomSource RandomSource = new RandomSource(Random);
+    static readonly IPaymentGateway Payments =
+       new PaymentGateway(RandomSource, Delay);
+    static readonly IReferenceGenerator ReferenceGenerator =
+        new RandomReferenceGenerator(RandomSource);
+
+
+    static readonly PricingService Pricing =
+           new PricingService(Promos, Clock);
+
+    static readonly ReceiptService Receipt =
+        new ReceiptService(
+            new LineItemFactory(),
+            new TaxCalculator(),
+            new CurrencyFormatter(),
+            new ReceiptFormatter());
+
+    static readonly BookingService BookingService =
+        new BookingService(
+            Customers,
+            Vehicles,
+            Bookings,
+            Promos,
+            Pricing,
+            Payments,
+            Sms,
+            Email,
+            Audit,
+            Clock,
+            ReferenceGenerator);
+
+    static readonly ReturnService ReturnService =
+        new ReturnService(
+            Bookings,
+            Vehicles,
+            Customers,
+            Payments,
+            Email,
+            Audit,
+            Receipt,
+            Clock);
+
+    static readonly CancellationService CancellationService =
+        new CancellationService(
+            Bookings,
+            Vehicles,
+            Customers,
+            Promos,
+            Payments,
+            Sms,
+            Email,
+            Audit,
+            Clock);
+
 
     static void Main()
     {
@@ -98,7 +168,7 @@ internal static class Program
     {
         foreach (var customer in Customers.GetAll())
         {
-            var age = RentalMath.CalculateAge(customer.DateOfBirth, DateTime.Today);
+            var age = RentalMathService.CalculateAge(customer.DateOfBirth, TimeProvider.System.GetLocalNow().Date);
             Console.WriteLine(
                 $"{customer.Id,2}  {customer.FullName,-16} age {age,2}  {customer.LoyaltyTier,-10} rentals {customer.CompletedRentals,2}  {(customer.IsBlacklisted ? "blacklisted" : "clear")}");
         }
@@ -137,11 +207,7 @@ internal static class Program
         var report = ReturnService.ProcessReturn(bookingId, endMileage, fuelQuarters, damageCost);
         PrintReport(report);
         var booking = Bookings.GetById(bookingId)!;
-        var receipt = new ReceiptService(
-            new LineItemFactory(),
-            new TaxCalculator(),
-            new CurrencyFormatter(),
-            new ReceiptFormatter()).Build(booking, report);
+        var receipt = Receipt.Build(booking, report);
         Console.WriteLine(receipt);
     }
 

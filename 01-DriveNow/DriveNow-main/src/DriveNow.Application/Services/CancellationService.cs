@@ -1,20 +1,45 @@
+using DriveNow.Application.Abstractions;
 using DriveNow.Domain.Enums;
 using DriveNow.Domain.Exceptions;
-using DriveNow.Infrastructure.External;
-using DriveNow.Infrastructure.Logging;
-using DriveNow.Infrastructure.Repositories;
 
-namespace DriveNow.Application.Bookings;
+namespace DriveNow.Application.Services;
 
 public class CancellationService
 {
-    readonly BookingRepository _bookings = new();
-    readonly VehicleRepository _vehicles = new();
-    readonly CustomerRepo _customers = new();
-    readonly PromoCodeRepository _promos = new();
-    readonly PaymentGateway _payments = new();
-    readonly SmsSender _sms = new();
-    readonly EmailSender _email = new();
+    private readonly IBookingRepository _bookings;
+    private readonly IVehicleRepository _vehicles;
+    private readonly ICustomerRepository _customers;
+    private readonly IPromoCodeRepository _promos;
+    private readonly IPaymentGateway _payments;
+    private readonly ISmsSender _sms;
+    private readonly IEmailSender _email;
+    private readonly IAuditLogger _audit;
+    private readonly TimeProvider _timeProvider;
+
+
+
+    public CancellationService(
+    IBookingRepository bookings,
+    IVehicleRepository vehicles,
+    ICustomerRepository customers,
+    IPromoCodeRepository promos,
+    IPaymentGateway payments,
+    ISmsSender sms,
+    IEmailSender email,
+    IAuditLogger audit,
+    TimeProvider timeProvider)
+    {
+        _bookings = bookings;
+        _vehicles = vehicles;
+        _customers = customers;
+        _promos = promos;
+        _payments = payments;
+        _sms = sms;
+        _email = email;
+        _audit = audit;
+        _timeProvider = timeProvider;
+    }
+
 
     public decimal Cancel(int bookingId)
     {
@@ -22,7 +47,7 @@ public class CancellationService
             ?? throw new BookingNotFoundException($"Booking #{bookingId} not found");
         if (booking.Status != BookingStatus.Reserved)
             throw new InvalidBookingStateException("Only reserved bookings can be cancelled");
-        if (DateTime.Now >= booking.PickupAt)
+        if (_timeProvider.GetLocalNow().DateTime >= booking.PickupAt)
             throw new InvalidBookingStateException("Booking has already started");
 
         var vehicle = _vehicles.GetById(booking.VehicleId)
@@ -30,7 +55,7 @@ public class CancellationService
         var customer = _customers.GetById(booking.CustomerId)
             ?? throw new CustomerNotFoundException($"Customer #{booking.CustomerId} not found");
 
-        var hours = (booking.PickupAt - DateTime.Now).TotalHours;
+        var hours = (booking.PickupAt - _timeProvider.GetLocalNow().DateTime).TotalHours;
         var fee = 0m;
         if (customer.LoyaltyTier != LoyaltyTier.Platinum)
         {
@@ -64,7 +89,7 @@ public class CancellationService
         var note = $"Booking {booking.Reference} cancelled";
         _sms.Send(customer.Phone, note);
         _email.Send(customer.Email, note, note);
-        AuditLog.Write(note);
+        _audit.Write(note);
         return fee;
     }
 

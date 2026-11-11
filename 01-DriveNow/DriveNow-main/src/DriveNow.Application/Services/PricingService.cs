@@ -1,23 +1,33 @@
+using DriveNow.Application.Abstractions;
 using DriveNow.Application.Models;
 using DriveNow.Domain.Entities;
 using DriveNow.Domain.Enums;
 using DriveNow.Domain.Exceptions;
 using DriveNow.Domain.Services;
 using DriveNow.Domain.ValueObjects;
-using DriveNow.Infrastructure.Repositories;
 
 namespace DriveNow.Application.Services;
 
 public class PricingService
 {
-    readonly PromoCodeRepository _promos = new();
+
+    private readonly IPromoCodeRepository _promos;
+    private readonly TimeProvider _timeProvider;
+
+    public PricingService(
+        IPromoCodeRepository promos,
+        TimeProvider timeProvider)
+    {
+        _promos = promos;
+        _timeProvider = timeProvider;
+    }
 
     public PriceBreakdown Calculate(Customer customer, Vehicle vehicle, BookingRequest request)
     {
-        var days = RentalMath.CalculateRentalDays(request.PickupAt, request.ReturnAt);
+        var days = RentalMathService.CalculateRentalDays(request.PickupAt, request.ReturnAt);
         var baseAmount = Round(vehicle.DailyRate * days);
         var weekend = WeekendSurcharge(vehicle.DailyRate, request.PickupAt, days);
-        var age = RentalMath.CalculateAge(customer.DateOfBirth, request.PickupAt);
+        var age = RentalMathService.CalculateAge(customer.DateOfBirth, request.PickupAt);
         var young = age is >= 21 and <= 24 ? Round(baseAmount * 0.15m) : 0m;
 
         var durationPercent = days >= 14 ? 15m : days > 7 && days < 14 ? 10m : 0m;
@@ -68,13 +78,15 @@ public class PricingService
 
     decimal PromoDiscount(string? code, int days, VehicleCategory category, decimal baseAmount)
     {
+        var today = _timeProvider.GetLocalNow().Date;
+
         if (code is null)
             return 0m;
 
         var promo = _promos.GetByCode(code)
             ?? throw new InvalidPromoCodeException($"Promo code '{code}' does not exist");
 
-        if (DateTime.Today < promo.ValidFrom || DateTime.Today > promo.ValidUntil)
+        if (today < promo.ValidFrom || today > promo.ValidUntil)
             throw new InvalidPromoCodeException($"Promo code '{code}' has expired");
 
         if (days < promo.MinDays)

@@ -3,7 +3,7 @@ using FluentAssertions;
 
 namespace DriveNow.UnitTests.Domain
 {
-    public class RentalMathTests
+    public class RentalMathServiceTests
     {
 
         [Theory]
@@ -32,7 +32,7 @@ namespace DriveNow.UnitTests.Domain
             var onDate = new DateTime(onDateYear, onDateMonth, onDateDay);
 
             // ACT
-            int result = RentalMath.CalculateAge(birthDate, onDate);
+            int result = RentalMathService.CalculateAge(birthDate, onDate);
 
             // Assert
             result.Should().Be(expectedAge);
@@ -68,7 +68,7 @@ namespace DriveNow.UnitTests.Domain
             var onDate = new DateTime(onDateYear, onDateMonth, onDateDay);
 
             // ACT
-            int result = RentalMath.CalculateAge(issueDate, onDate);
+            int result = RentalMathService.CalculateAge(issueDate, onDate);
 
             // Assert
             result.Should().Be(expectedAge);
@@ -92,7 +92,7 @@ namespace DriveNow.UnitTests.Domain
             int expectedDays)
         {
             //Arrange with Act
-            var result = RentalMath.CalculateRentalDays(pickupDate, returnDate);
+            var result = RentalMathService.CalculateRentalDays(pickupDate, returnDate);
 
             // Assert 
             result.Should().Be(expectedDays);
@@ -110,7 +110,7 @@ namespace DriveNow.UnitTests.Domain
         {
 
             //Arrange -  Act
-            var result = () => RentalMath.CalculateRentalDays(pickupDate, returnDate);
+            var result = () => RentalMathService.CalculateRentalDays(pickupDate, returnDate);
 
             // Assert
             result.Should().Throw<ArgumentException>().WithMessage("Return must be after pickup");

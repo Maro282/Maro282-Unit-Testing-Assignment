@@ -1,22 +1,47 @@
+using DriveNow.Application.Abstractions;
+using DriveNow.Application.Receipts;
 using DriveNow.Domain.Entities;
 using DriveNow.Domain.Enums;
 using DriveNow.Domain.Exceptions;
 using DriveNow.Domain.Services;
 using DriveNow.Domain.ValueObjects;
-using DriveNow.Application.Receipts;
-using DriveNow.Infrastructure.External;
-using DriveNow.Infrastructure.Logging;
-using DriveNow.Infrastructure.Repositories;
+
 
 namespace DriveNow.Application.Services;
 
 public class ReturnService
 {
-    readonly BookingRepository _bookings = new();
-    readonly VehicleRepository _vehicles = new();
-    readonly CustomerRepo _customers = new();
-    readonly PaymentGateway _payments = new();
-    readonly EmailSender _email = new();
+    private readonly IBookingRepository _bookings;
+    private readonly IVehicleRepository _vehicles;
+    private readonly ICustomerRepository _customers;
+    private readonly IPaymentGateway _payments;
+    private readonly IEmailSender _email;
+    private readonly IAuditLogger _audit;
+    private readonly ReceiptService _receiptService;
+    private readonly TimeProvider _timeProvider;
+
+
+
+    public ReturnService(
+    IBookingRepository bookings,
+    IVehicleRepository vehicles,
+    ICustomerRepository customers,
+    IPaymentGateway payments,
+    IEmailSender email,
+    IAuditLogger audit,
+    ReceiptService receiptService,
+    TimeProvider timeProvider)
+    {
+        _bookings = bookings;
+        _vehicles = vehicles;
+        _customers = customers;
+        _payments = payments;
+        _email = email;
+        _audit = audit;
+        _receiptService = receiptService;
+        _timeProvider = timeProvider;
+    }
+
 
     public ReturnReport ProcessReturn(int bookingId, int endMileage, int fuelQuarters, decimal damageCost)
     {
@@ -34,7 +59,7 @@ public class ReturnService
         var customer = _customers.GetById(booking.CustomerId)
             ?? throw new CustomerNotFoundException($"Customer #{booking.CustomerId} not found");
 
-        var now = DateTime.Now;
+        var now = _timeProvider.GetLocalNow().DateTime;
         var report = BuildReport(booking, vehicle, endMileage, fuelQuarters, damageCost, now);
 
         booking.Status = BookingStatus.Completed;
@@ -55,13 +80,15 @@ public class ReturnService
         if (booking.Deposit > 0)
             _payments.Refund(customer.Id, booking.Deposit, $"Deposit refund {booking.Reference}");
 
-        var receipt = new ReceiptService(
-            new LineItemFactory(),
-            new TaxCalculator(),
-            new CurrencyFormatter(),
-            new ReceiptFormatter()).Build(booking, report);
-        _email.Send(customer.Email, $"Receipt {booking.Reference}", receipt);
-        AuditLog.Write($"Booking {booking.Reference} returned");
+        //var receipt = new ReceiptService(
+        //    new LineItemFactory(),
+        //    new TaxCalculator(),
+        //    new CurrencyFormatter(),
+        //    new ReceiptFormatter()).Build(booking, report);
+        //_email.Send(customer.Email, $"Receipt {booking.Reference}", receipt);
+        //_audit.Write($"Booking {booking.Reference} returned");
+
+        var receipt = _receiptService.Build(booking, report);
         return report;
     }
 
