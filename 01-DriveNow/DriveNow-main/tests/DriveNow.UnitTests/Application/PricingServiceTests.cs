@@ -5,7 +5,9 @@ using DriveNow.Application.Models;
 using DriveNow.Application.Services;
 using DriveNow.Domain.Entities;
 using DriveNow.Domain.Enums;
+using DriveNow.Domain.Exceptions;
 using DriveNow.Domain.ValueObjects;
+using DriveNow.UnitTests.Application.Pricing;
 using FluentAssertions;
 using Microsoft.Extensions.Time.Testing;
 
@@ -433,6 +435,66 @@ public class PricingServiceTests
         // Assert
         actual.Should().BeEquivalentTo(expected);
     }
+
+
+
+
+    // ClassData provides all promo-code scenarios.
+    // ExpectedMessage is null when the promo is valid.
+    [Theory]
+    [ClassData(typeof(PromoCodeTestData))]
+    public void Calculate_PromoCode_ReturnsExpectedResult(
+        string code,
+        PromoCode? promo,
+        int days,
+        VehicleCategory category,
+        string? expectedMessage)
+    {
+        // Arrange
+        var customer = new Customer
+        {
+            DateOfBirth = new DateTime(1990, 1, 1),
+            LoyaltyTier = LoyaltyTier.None
+        };
+
+        var vehicle = new Vehicle
+        {
+            DailyRate = 500,
+            Category = category
+        };
+
+        var request = new BookingRequest
+        {
+            PickupAt = new DateTime(2026, 11, 12, 10, 0, 0),
+            ReturnAt = new DateTime(2026, 11, 12, 10, 0, 0)
+                .AddDays(days),
+            InsurancePlan = InsurancePlan.Basic,
+            PromoCode = code
+        };
+
+        var service = new PricingService(
+            new FakePromoCodeRepository(promo),
+            new FakeTimeProvider());
+
+        // Act and Assert:
+        // If an error message is expected, verify the exception.
+        if (expectedMessage != null)
+        {
+            var action = () => service.Calculate(customer, vehicle, request);
+
+            action.Should()
+                .Throw<InvalidPromoCodeException>()
+                .WithMessage(expectedMessage);
+        }
+        else
+        {
+            // A valid promo should apply 15% of the base amount.
+            var result = service.Calculate(customer, vehicle, request);
+
+            result.PromoDiscount.Should().Be(150);
+        }
+    }
+
 
 
 
