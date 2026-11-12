@@ -496,6 +496,42 @@ public class PricingServiceTests
     }
 
 
+    // ====================== R4 ==========================
+
+
+    // R4:
+    // Random data is acceptable when we only check that objects are generated correctly.
+    [Fact]
+    public void CustomerFaker_GeneratesCustomer()
+    {
+        var customer = new CustomerFaker().Generate();
+        var vehicle = new VehicleFaker().Generate();
+
+        customer.FullName.Should().NotBeNullOrEmpty();
+        customer.Email.Should().NotBeNullOrEmpty();
+        vehicle.Model.Should().NotBeNullOrEmpty();
+        vehicle.DailyRate.Should().BeGreaterThan(0);
+    }
+
+    // R4:
+    // Random age is NOT acceptable when testing a specific age boundary.
+    // We use WithAge(23) to control the exact value.
+    [Fact]
+    public void CustomerFaker_WithAgeAndTier_ReturnsSelectedValues()
+    {
+        var customer = new CustomerFaker()
+            .WithAge(23)
+            .WithTier(LoyaltyTier.Silver)
+            .Generate();
+
+        customer.DateOfBirth.Should().Be(
+            new DateTime(2026, 11, 12).AddYears(-23));
+
+        customer.LoyaltyTier.Should().Be(LoyaltyTier.Silver);
+    }
+
+
+
 
 
 

@@ -53,3 +53,21 @@ Bounderies that i have tested : -
 | BR-01: CalculateAge          | Add February 29 birthday on March 1 in a non-leap year.                           | it's not important i have covered the same idea |
 | BR-02: CalculateLicenseYears | Add February 29 issue date on February 28 in a non-leap year (exact anniversary). | I have already covered it                       |
 | BR-03: CalculateRentalDays   | Add 48h + 60m (2 days), 48h + 61m (3 days), and exactly 60 minutes total (1 day). | i have covered all                              |
+
+
+
+ --- 
+
+
+
+## R4 — Bogus
+
+I created CustomerFaker and VehicleFaker using Bogus.
+
+Both use a fixed seed with UseSeed().
+
+A fixed seed makes generated data repeatable. This helps FIRST because the same test data is generated every time the tests run.
+
+Random data is fine when I only test that a generated customer or vehicle has valid basic properties.
+
+Random data is not fine when I test a specific business rule such as the young-driver age boundary. For that test, I use WithAge(23) to control the exact age.
