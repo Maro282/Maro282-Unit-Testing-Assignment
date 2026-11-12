@@ -9,6 +9,7 @@ using DriveNow.Domain.Exceptions;
 using DriveNow.Domain.ValueObjects;
 using DriveNow.UnitTests.Application.Pricing;
 using FluentAssertions;
+using FluentAssertions.Execution;
 using Microsoft.Extensions.Time.Testing;
 
 namespace DriveNow.UnitTests.Application;
@@ -27,10 +28,13 @@ public class PricingServiceTests
 
         public PromoCode? GetByCode(string code)
         {
-            if (_promo?.Code == code)
-                return _promo;
-
-            return null;
+            return _promo != null &&
+       string.Equals(
+           _promo.Code,
+           code,
+           StringComparison.OrdinalIgnoreCase)
+    ? _promo
+    : null;
         }
         public void Update(PromoCode promo)
         {
@@ -417,7 +421,7 @@ public class PricingServiceTests
 
     [Theory]
     [MemberData(nameof(Examples))]
-    public void Calculate_WorkedExamples_ReturnsCorrectPrice(
+    public async Task Calculate_WorkedExamples_ReturnsCorrectPrice(
         Customer customer,
         Vehicle vehicle,
         BookingRequest request,
@@ -432,8 +436,16 @@ public class PricingServiceTests
         // Act
         var actual = service.Calculate(customer, vehicle, request);
 
-        // Assert
-        actual.Should().BeEquivalentTo(expected);
+
+
+        // Assert: compare all properties.
+        using (new AssertionScope())
+        {
+            actual.Should().BeEquivalentTo(expected);
+        }
+
+        // Snapshot: save and compare the complete result.
+        await Verify(actual);
     }
 
 

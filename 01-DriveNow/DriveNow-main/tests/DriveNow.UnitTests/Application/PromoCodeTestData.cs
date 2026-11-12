@@ -130,7 +130,7 @@ public class PromoCodeTestData : TheoryData<
             new PromoCode
             {
                 Code = "SAVE15",
-                ValidFrom = new DateTime(2026, 11, 13),
+                ValidFrom = new DateTime(2026, 11, 1),
                 ValidUntil = new DateTime(2026, 12, 31),
                 MinDays = 5,
                 MaxUses = 100,
