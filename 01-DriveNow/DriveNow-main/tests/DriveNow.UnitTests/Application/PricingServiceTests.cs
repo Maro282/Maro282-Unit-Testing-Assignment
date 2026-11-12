@@ -5,6 +5,7 @@ using DriveNow.Application.Models;
 using DriveNow.Application.Services;
 using DriveNow.Domain.Entities;
 using DriveNow.Domain.Enums;
+using DriveNow.Domain.ValueObjects;
 using FluentAssertions;
 using Microsoft.Extensions.Time.Testing;
 
@@ -261,9 +262,7 @@ public class PricingServiceTests
     [InlineData(LoyaltyTier.Silver, 400)]
     [InlineData(LoyaltyTier.Gold, 200)]
     [InlineData(LoyaltyTier.Platinum, 200)]
-    public void Calculate_AdditionalDrivers_ReturnsCorrectCost(
-        LoyaltyTier tier,
-        decimal expected)
+    public void Calculate_AdditionalDrivers_ReturnsCorrectCost(LoyaltyTier tier, decimal expected)
     {
         // Arrange
         var pickupDate = new DateTime(2026, 11, 12, 10, 0, 0);
@@ -298,5 +297,145 @@ public class PricingServiceTests
         // Assert
         result.AdditionalDriversCost.Should().Be(expected);
     }
+
+
+    // BR-30 to BR-40:
+    // MemberData supplies complete scenarios from PricingTestData.
+    // We compare the complete PriceBreakdown, not just one property.
+
+
+    public static IEnumerable<object[]> Examples
+    {
+        get
+        {
+            yield return new object[]
+            {
+                // Customer
+                new Customer
+                {
+                    DateOfBirth = new DateTime(1992, 11, 12),
+                    LoyaltyTier = LoyaltyTier.Gold
+                },
+
+                // Vehicle
+                new Vehicle
+                {
+                    DailyRate = 600,
+                    Category = VehicleCategory.Economy
+                },
+
+                // Booking request
+                new BookingRequest
+                {
+                    PickupAt = new DateTime(2026, 11, 22, 10, 0, 0),
+                    ReturnAt = new DateTime(2026, 11, 25, 10, 0, 0),
+                    InsurancePlan = InsurancePlan.Standard,
+                    AdditionalDrivers = 0
+                },
+
+                // No promo code in Example A.
+                null,
+
+                // Expected complete price breakdown.
+                new PriceBreakdown
+                {
+                    RentalDays = 3,
+                    BaseAmount = 1800,
+                    WeekendSurcharge = 0,
+                    YoungDriverSurcharge = 0,
+                    DurationDiscount = 0,
+                    LoyaltyDiscount = 180,
+                    PromoDiscount = 0,
+                    InsuranceCost = 450,
+                    AdditionalDriversCost = 0,
+                    Total = 2070
+                }
+            };
+
+            // Example B from README:
+            // Silver customer, 7 days, SAVE15, Premium insurance, one additional driver.
+            yield return new object[]
+            {
+                // Customer
+                new Customer
+                {
+                    DateOfBirth = new DateTime(2003, 11, 19),
+                    LoyaltyTier = LoyaltyTier.Silver
+                },
+
+                // Vehicle
+                new Vehicle
+                {
+                    DailyRate = 1500,
+                    Category = VehicleCategory.SUV
+                },
+
+                // Booking request
+                new BookingRequest
+                {
+                    PickupAt = new DateTime(2026, 11, 19, 9, 0, 0),
+                    ReturnAt = new DateTime(2026, 11, 26, 9, 30, 0),
+                    InsurancePlan = InsurancePlan.Premium,
+                    AdditionalDrivers = 1,
+                    PromoCode = "SAVE15"
+                },
+
+                // Promo code
+                new PromoCode
+                {
+                    Code = "SAVE15",
+                    DiscountPercent = 15,
+                    ValidFrom = new DateTime(2026, 11, 2),
+                    ValidUntil = new DateTime(2027, 1, 11),
+                    MinDays = 1,
+                    AllowedCategories = null,
+                    MaxUses = 100,
+                    UsedCount = 3
+                },
+
+                // Expected complete price breakdown.
+                new PriceBreakdown
+                {
+                    RentalDays = 7,
+                    BaseAmount = 10500,
+                    WeekendSurcharge = 600,
+                    YoungDriverSurcharge = 1575,
+                    DurationDiscount = 1050,
+                    LoyaltyDiscount = 525,
+                    PromoDiscount = 1050,
+                    InsuranceCost = 2100,
+                    AdditionalDriversCost = 700,
+                    Total = 12850
+                }
+            };
+        }
+    }
+
+
+
+    [Theory]
+    [MemberData(nameof(Examples))]
+    public void Calculate_WorkedExamples_ReturnsCorrectPrice(
+        Customer customer,
+        Vehicle vehicle,
+        BookingRequest request,
+        PromoCode? promo,
+        PriceBreakdown expected)
+    {
+        // Arrange
+        var service = new PricingService(
+            new FakePromoCodeRepository(promo),
+            new FakeTimeProvider());
+
+        // Act
+        var actual = service.Calculate(customer, vehicle, request);
+
+        // Assert
+        actual.Should().BeEquivalentTo(expected);
+    }
+
+
+
+
 
 }
