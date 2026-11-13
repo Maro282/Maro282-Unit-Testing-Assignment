@@ -6,6 +6,7 @@ using DriveNow.Domain.Exceptions;
 using DriveNow.Domain.ValueObjects;
 using FluentAssertions;
 using Moq;
+using VerifyXunit;
 
 namespace DriveNow.UnitTests.Application;
 
@@ -547,5 +548,20 @@ public class BookingServiceTests
                 $"Booking {booking.Reference} confirmed"),
             Times.Once);
     }
+
+
+    // R7
+    [Fact]
+    public async Task CreateBooking_ValidRequest_MatchesSnapshot()
+    {
+        var context = new BookingServiceTestContext();
+
+        var service = context.CreateBookingService();
+
+        var booking = service.CreateBooking(context.CreateBookingRequest());
+
+        await Verify(booking);
+    }
+
 
 }
