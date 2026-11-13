@@ -1,0 +1,17 @@
+﻿{
+  Id: 1,
+  Reference: DN-20261113-AB12,
+  CustomerId: 1,
+  VehicleId: 10,
+  PickupAt: DateTime_1,
+  ReturnAt: DateTime_2,
+  Price: {
+    RentalDays: 1,
+    BaseAmount: 600.0,
+    WeekendSurcharge: 120.00,
+    Total: 720.00
+  },
+  Deposit: 1000.0,
+  CreatedAt: DateTime_3,
+  StartMileage: 25000
+}
