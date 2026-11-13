@@ -5,7 +5,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="Bookings\" />
+	  <Folder Include="Services\Bookings\" />
 	</ItemGroup>
 
 	<PropertyGroup>
