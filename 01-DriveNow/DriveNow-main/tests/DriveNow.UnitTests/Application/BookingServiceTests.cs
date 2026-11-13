@@ -1,8 +1,11 @@
-﻿using DriveNow.Domain.Entities;
+﻿using DriveNow.Application.Abstractions;
+using DriveNow.Application.Services;
+using DriveNow.Domain.Entities;
 using DriveNow.Domain.Enums;
 using DriveNow.Domain.Exceptions;
-using FluentAssertions;
 using DriveNow.Domain.ValueObjects;
+using FluentAssertions;
+using Moq;
 
 namespace DriveNow.UnitTests.Application;
 
@@ -433,5 +436,116 @@ public class BookingServiceTests
             .Contain($"Booking {booking.Reference} created");
     }
 
+    // =============================== R2 USING MOQ =======================================
+
+
+    [Fact]
+    public void CreateBooking_WithMoq_CustomerDoesNotExist_ThrowsException()
+    {
+        var context = new BookingServiceTestContext();
+
+        var customers = new Mock<ICustomerRepository>();
+
+        customers
+            .Setup(x => x.GetById(1))
+            .Returns((Customer?)null);
+
+        var pricing = new PricingService(
+            new FakePromoCodeRepository(),
+            context.Clock);
+
+        var service = new BookingService(
+            customers.Object,
+            new FakeVehicleRepository(context.Vehicle),
+            context.Bookings,
+            new FakePromoCodeRepository(),
+            pricing,
+            context.Payments,
+            context.Sms,
+            context.Email,
+            context.Audit,
+            context.Clock,
+            context.References);
+
+        var act = () => service.CreateBooking(context.CreateBookingRequest());
+
+        act.Should()
+            .Throw<CustomerNotFoundException>()
+            .WithMessage("Customer #1 not found");
+
+        customers.Verify(x => x.GetById(1), Times.Once);
+    }
+
+
+    [Fact]
+    public void CreateBooking_WithMoq_PlatinumDoesNotCallPaymentGateway()
+    {
+        var context = new BookingServiceTestContext();
+        context.Customer.LoyaltyTier = LoyaltyTier.Platinum;
+
+        var payments = new Mock<IPaymentGateway>();
+
+        var pricing = new PricingService(
+            new FakePromoCodeRepository(),
+            context.Clock);
+
+        var service = new BookingService(
+            new FakeCustomerRepository(context.Customer),
+            new FakeVehicleRepository(context.Vehicle),
+            context.Bookings,
+            new FakePromoCodeRepository(),
+            pricing,
+            payments.Object,
+            context.Sms,
+            context.Email,
+            context.Audit,
+            context.Clock,
+            context.References);
+
+        var booking = service.CreateBooking(context.CreateBookingRequest());
+
+        booking.Deposit.Should().Be(0m);
+
+        payments.Verify(
+            x => x.Charge(
+                It.IsAny<int>(),
+                It.IsAny<decimal>(),
+                It.IsAny<string>()),
+            Times.Never);
+    }
+
+
+    [Fact]
+    public void CreateBooking_WithMoq_SendsSmsOnce()
+    {
+        var context = new BookingServiceTestContext();
+
+        var sms = new Mock<ISmsSender>();
+
+        var pricing = new PricingService(
+            new FakePromoCodeRepository(),
+            context.Clock);
+
+        var service = new BookingService(
+            new FakeCustomerRepository(context.Customer),
+            new FakeVehicleRepository(context.Vehicle),
+            context.Bookings,
+            new FakePromoCodeRepository(),
+            pricing,
+            context.Payments,
+            sms.Object,
+            context.Email,
+            context.Audit,
+            context.Clock,
+            context.References);
+
+        var booking = service.CreateBooking(context.CreateBookingRequest());
+
+        sms.Verify(
+            x => x.Send(
+                context.Customer.Phone,
+                $"Booking {booking.Reference} confirmed"),
+            Times.Once);
+    }
 
 }
