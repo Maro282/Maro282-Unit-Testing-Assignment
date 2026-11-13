@@ -105,4 +105,27 @@ public class BookingServiceAutoFixtureTests
     }
 
 
+
+    // R5
+    [Theory]
+    [InlineAutoData(20)]
+    [InlineAutoData(21)]
+    [InlineAutoData(25)]
+    public void CustomerAge_IsGeneratedForEachTestCase(
+        int age,
+        Customer customer)
+    {
+        var pickupDate = new DateTime(2026, 11, 13);
+
+        customer.DateOfBirth = pickupDate.AddYears(-age);
+
+        var actualAge =
+            DriveNow.Domain.Services.RentalMathService.CalculateAge(
+                customer.DateOfBirth,
+                pickupDate);
+
+        actualAge.Should().Be(age);
+    }
+
+
 }
